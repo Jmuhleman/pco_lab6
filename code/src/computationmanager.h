@@ -187,7 +187,11 @@ protected:
 
     // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
+	 std::queue<Request> bufferRequestsA;
+	 std::queue<Request> bufferRequestsB;
+	 std::queue<Request> bufferRequestsC;
 
+	 std::vector<Result> bufferResults;
     bool stopped = false;
 
 private:

@@ -20,8 +20,14 @@ ComputationManager::ComputationManager(int maxQueueSize): MAX_TOLERATED_QUEUE_SI
 }
 
 int ComputationManager::requestComputation(Computation c) {
-    // TODO
-    return -1;
+	// TODO
+	monitorIn();
+	//il faut construire un request avec le computation brut afin de les trier
+	//dans le buffer du résultat!
+
+
+
+	 monitorOut();
 }
 
 void ComputationManager::abortComputation(int id) {
