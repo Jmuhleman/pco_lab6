@@ -80,17 +80,17 @@ void ComputationManager::abortComputation(int id) {
 	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
 	//TODO faire un truc générique ...
 	auto removeIdDeque = [id](std::deque<Request>& requests) {
-	   auto it = std::remove_if(requests.begin(), requests.end(),
-	                            [id](const Request& request) { return request.getId() == id; });
 
-	   auto ret = requests.erase(it, requests.end());
-	   return ret != it;	};
+	   auto ret = requests.erase(std::remove_if(requests.begin(), requests.end(),
+	                                            [id](const Request& request) { return request.getId() == id; }), requests.end());
+	   return ret != requests.end();
+	};
+
 	auto removeIdVector = [id](std::vector<Result>& requests) {
-	   auto it = std::remove_if(requests.begin(), requests.end(),
-	                            [id](const Result& request) { return request.getId() == id; });
 
-	    auto ret = requests.erase(it, requests.end());
-	    return ret != it;
+	    auto ret = requests.erase(std::remove_if(requests.begin(), requests.end(),
+	                                             [id](const Result& request) { return request.getId() == id; }), requests.end());
+	   return ret != requests.end();
 	};
 	// Supprimer l'élément avec l'ID spécifié de chaque deque
 	// Signaler que les files ne sont plus pleines
@@ -201,4 +201,6 @@ void ComputationManager::provideResult(Result result) {
 
 void ComputationManager::stop() {
     // TODO
+
+
 }

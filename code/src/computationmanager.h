@@ -209,7 +209,6 @@ private:
      */
     inline void throwStopException() {throw StopException();}
 
-    int nextId = 0;
 };
 
 #endif // COMPUTATIONMANAGER_H
