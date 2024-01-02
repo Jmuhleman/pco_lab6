@@ -187,12 +187,13 @@ protected:
 	 unsigned id;
     // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
-	 std::queue<Request> bufferRequestsA;
-	 std::queue<Request> bufferRequestsB;
-	 std::queue<Request> bufferRequestsC;
+	 std::deque<Request> bufferRequestsA;
+	 std::deque<Request> bufferRequestsB;
+	 std::deque<Request> bufferRequestsC;
 
 	 std::vector<Result> bufferResults;
-    bool stopped = false;
+	 std::vector<int> abortedIds;
+     bool stopped = false;
 
 	 Condition bufferEmpty;
 	 Condition queueAEmpty;

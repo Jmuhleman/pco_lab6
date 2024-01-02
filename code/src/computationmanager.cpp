@@ -18,10 +18,6 @@ ComputationManager::ComputationManager(int maxQueueSize): MAX_TOLERATED_QUEUE_SI
 {
     // TODO
 	 id = 0;
-	 bufferRequestsA = std::queue<Request>();
-	 bufferRequestsB = std::queue<Request>();
-	 bufferRequestsC = std::queue<Request>();
-
 }
 
 int ComputationManager::requestComputation(Computation c) {
@@ -38,7 +34,7 @@ int ComputationManager::requestComputation(Computation c) {
 				wait(queueAFull);
 			}
 			//on ajoute le request dans le buffer
-			bufferRequestsA.push(r);
+			bufferRequestsA.push_back(r);
 			//on notifie les threads qui attendent
 			signal(queueAEmpty);
 			break;
@@ -51,7 +47,7 @@ int ComputationManager::requestComputation(Computation c) {
 				wait(queueBFull);
 			}
 			//on ajoute le request dans le buffer
-			bufferRequestsB.push(r);
+			bufferRequestsB.push_back(r);
 			//on notifie les threads qui attendent
 			signal(queueBEmpty);
 			break;
@@ -64,7 +60,7 @@ int ComputationManager::requestComputation(Computation c) {
 				wait(queueCFull);
 			}
 			//on ajoute le request dans le buffer
-			bufferRequestsC.push(r);
+			bufferRequestsC.push_back(r);
 			//on notifie les threads qui attendent
 			signal(queueCEmpty);
 			break;
@@ -75,7 +71,41 @@ int ComputationManager::requestComputation(Computation c) {
 
 void ComputationManager::abortComputation(int id) {
     // TODO
+	//aller dans chaque queue et buffer de résultat et supprimer le request avec l'id
+	//si le request est trouvé, on le supprime et on notifie les threads qui attendent
+	//sinon, on ne fait rien
+	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
+	// continueWork(id)
+	monitorIn();
+	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
+	//TODO faire un truc générique ...
+	auto removeIdDeque = [id](std::deque<Request>& requests) {
+	   auto it = std::remove_if(requests.begin(), requests.end(),
+	                            [id](const Request& request) { return request.getId() == id; });
 
+	   auto ret = requests.erase(it, requests.end());
+	   return ret != it;	};
+	auto removeIdVector = [id](std::vector<Result>& requests) {
+	   auto it = std::remove_if(requests.begin(), requests.end(),
+	                            [id](const Result& request) { return request.getId() == id; });
+
+	    auto ret = requests.erase(it, requests.end());
+	    return ret != it;
+	};
+	// Supprimer l'élément avec l'ID spécifié de chaque deque
+	// Signaler que les files ne sont plus pleines
+	if (removeIdDeque(bufferRequestsA)) {
+		signal(queueAFull);
+	}
+	if (removeIdDeque(bufferRequestsB)) {
+		signal(queueBFull);
+	}
+	if (removeIdDeque(bufferRequestsC)) {
+		signal(queueCFull);
+	}
+	removeIdVector(bufferResults);
+	abortedIds.push_back(id);
+	monitorOut();
 
 }
 
@@ -111,7 +141,7 @@ Request ComputationManager::getWork(ComputationType computationType) {
 			//on récupère le request
 			Request r = bufferRequestsA.front();
 			//on le retire du buffer
-			bufferRequestsA.pop();
+			bufferRequestsA.pop_front();
 			//on retourne le request
 			signal(queueAFull);
 			monitorOut();
@@ -125,7 +155,7 @@ Request ComputationManager::getWork(ComputationType computationType) {
 			//on récupère le request
 			Request r = bufferRequestsB.front();
 			//on le retire du buffer
-			bufferRequestsB.pop();
+			bufferRequestsB.pop_front();
 			//on retourne le request
 			signal(queueBFull);
 			monitorOut();
@@ -139,7 +169,7 @@ Request ComputationManager::getWork(ComputationType computationType) {
 			//on récupère le request
 			Request r = bufferRequestsC.front();
 			//on le retire du buffer
-			bufferRequestsC.pop();
+			bufferRequestsC.pop_front();
 			//on retourne le request
 			signal(queueBFull);
 			monitorOut();
@@ -151,7 +181,11 @@ Request ComputationManager::getWork(ComputationType computationType) {
 
 bool ComputationManager::continueWork(int id) {
     // TODO
-    return true;
+	if (std::any_of(abortedIds.begin(), abortedIds.end(), [id](int abortedId) {return abortedId == id; })) {
+		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id), abortedIds.end());
+		return false;
+	}
+	return true;
 }
 
 void ComputationManager::provideResult(Result result) {
