@@ -194,9 +194,13 @@ protected:
 	 std::vector<Result> bufferResults;
     bool stopped = false;
 
-	 Condition condA;
-	 Condition condB;
-	 Condition condC;
+	 Condition bufferEmpty;
+	 Condition queueAEmpty;
+	 Condition queueBEmpty;
+	 Condition queueCEmpty;
+     Condition queueAFull;
+     Condition queueBFull;
+     Condition queueCFull;
 
 private:
     /**

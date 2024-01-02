@@ -12,7 +12,7 @@
 // afin de faire attendre les threads appelants et aussi afin que le code compile.
 
 #include "computationmanager.h"
-
+#include <algorithm>
 
 ComputationManager::ComputationManager(int maxQueueSize): MAX_TOLERATED_QUEUE_SIZE(maxQueueSize)
 {
@@ -33,28 +33,40 @@ int ComputationManager::requestComputation(Computation c) {
 		case ComputationType::A: {
 			//on construit un request avec la computation brut
 			Request r(c, id++);
+			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
+				//si le buffer est plein, on attend
+				wait(queueAFull);
+			}
 			//on ajoute le request dans le buffer
 			bufferRequestsA.push(r);
 			//on notifie les threads qui attendent
-			signal(condA);
+			signal(queueAEmpty);
 			break;
 		}
 		case ComputationType::B:{
 			//on construit un request avec la computation brut
 			Request r(c, id++);
+			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
+				//si le buffer est plein, on attend
+				wait(queueBFull);
+			}
 			//on ajoute le request dans le buffer
 			bufferRequestsB.push(r);
 			//on notifie les threads qui attendent
-			signal(condB);
+			signal(queueBEmpty);
 			break;
 		}
 		case ComputationType::C:{
 			//on construit un request avec la computation brut
 			Request r(c, id++);
+			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
+				//si le buffer est plein, on attend
+				wait(queueCFull);
+			}
 			//on ajoute le request dans le buffer
 			bufferRequestsC.push(r);
 			//on notifie les threads qui attendent
-			signal(condC);
+			signal(queueCEmpty);
 			break;
 		}
 	}
@@ -63,6 +75,8 @@ int ComputationManager::requestComputation(Computation c) {
 
 void ComputationManager::abortComputation(int id) {
     // TODO
+
+
 }
 
 Result ComputationManager::getNextResult() {
@@ -70,12 +84,16 @@ Result ComputationManager::getNextResult() {
     // Replace all of the code below by your code
 
     // Filled with some code in order to make the thread in the UI wait
-    monitorIn();
-    auto c = Condition();
-    wait(c);
-    monitorOut();
+	 monitorIn();
 
-    return Result(-1, 0.0);
+	 if (bufferResults.empty()) {
+		 wait(bufferEmpty);
+	 }
+
+     Result r = bufferResults.front();
+	 bufferResults.erase(bufferResults.begin());
+	 monitorOut();
+	 return r;
 }
 
 Request ComputationManager::getWork(ComputationType computationType) {
@@ -88,39 +106,42 @@ Request ComputationManager::getWork(ComputationType computationType) {
 		case ComputationType::A: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsA.empty()) {
-				wait(condA);
+				wait(queueAEmpty);
 			}
 			//on récupère le request
 			Request r = bufferRequestsA.front();
 			//on le retire du buffer
 			bufferRequestsA.pop();
 			//on retourne le request
+			signal(queueAFull);
 			monitorOut();
 			return r;
 		}
 		case ComputationType::B: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsB.empty()) {
-				wait(condB);
+				wait(queueBEmpty);
 			}
 			//on récupère le request
 			Request r = bufferRequestsB.front();
 			//on le retire du buffer
 			bufferRequestsB.pop();
 			//on retourne le request
+			signal(queueBFull);
 			monitorOut();
 			return r;
 		}
 		case ComputationType::C: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsC.empty()) {
-				wait(condC);
+				wait(queueCEmpty);
 			}
 			//on récupère le request
 			Request r = bufferRequestsC.front();
 			//on le retire du buffer
 			bufferRequestsC.pop();
 			//on retourne le request
+			signal(queueBFull);
 			monitorOut();
 			return r;
 		}
@@ -134,7 +155,14 @@ bool ComputationManager::continueWork(int id) {
 }
 
 void ComputationManager::provideResult(Result result) {
-    // TODO
+
+	monitorIn();
+	bufferResults.push_back(result);
+	std::sort(bufferResults.begin(), bufferResults.end(),
+			  [](Result a, Result b) {return a.getId() < b.getId(); });
+	signal(bufferEmpty);
+	monitorOut();
+
 }
 
 void ComputationManager::stop() {
