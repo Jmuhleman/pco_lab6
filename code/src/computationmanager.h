@@ -184,7 +184,7 @@ protected:
 
     // Ajoutez vos attributs et déclarations de méthodes ici
     // P.ex. variables conditions et structure de données pour le buffer
-
+	 unsigned id;
     // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
 	 std::queue<Request> bufferRequestsA;
@@ -193,6 +193,10 @@ protected:
 
 	 std::vector<Result> bufferResults;
     bool stopped = false;
+
+	 Condition condA;
+	 Condition condB;
+	 Condition condC;
 
 private:
     /**

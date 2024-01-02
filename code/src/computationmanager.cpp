@@ -17,17 +17,48 @@
 ComputationManager::ComputationManager(int maxQueueSize): MAX_TOLERATED_QUEUE_SIZE(maxQueueSize)
 {
     // TODO
+	 id = 0;
+	 bufferRequestsA = std::queue<Request>();
+	 bufferRequestsB = std::queue<Request>();
+	 bufferRequestsC = std::queue<Request>();
+
 }
 
 int ComputationManager::requestComputation(Computation c) {
 	// TODO
 	monitorIn();
-	//il faut construire un request avec le computation brut afin de les trier
-	//dans le buffer du résultat!
-
-
-
-	 monitorOut();
+	//il faut construire un request avec la computation brut afin de les trier
+	//dans le buffer du résultat !
+	switch (c.computationType){
+		case ComputationType::A: {
+			//on construit un request avec la computation brut
+			Request r(c, id++);
+			//on ajoute le request dans le buffer
+			bufferRequestsA.push(r);
+			//on notifie les threads qui attendent
+			signal(condA);
+			break;
+		}
+		case ComputationType::B:{
+			//on construit un request avec la computation brut
+			Request r(c, id++);
+			//on ajoute le request dans le buffer
+			bufferRequestsB.push(r);
+			//on notifie les threads qui attendent
+			signal(condB);
+			break;
+		}
+		case ComputationType::C:{
+			//on construit un request avec la computation brut
+			Request r(c, id++);
+			//on ajoute le request dans le buffer
+			bufferRequestsC.push(r);
+			//on notifie les threads qui attendent
+			signal(condC);
+			break;
+		}
+	}
+	monitorOut();
 }
 
 void ComputationManager::abortComputation(int id) {
@@ -53,11 +84,48 @@ Request ComputationManager::getWork(ComputationType computationType) {
 
     // Filled with arbitrary code in order to make the callers wait
     monitorIn();
-    auto c = Condition();
-    wait(c);
-    monitorOut();
+	switch (computationType) {
+		case ComputationType::A: {
+			//si le buffer est vide, on attend
+			if (bufferRequestsA.empty()) {
+				wait(condA);
+			}
+			//on récupère le request
+			Request r = bufferRequestsA.front();
+			//on le retire du buffer
+			bufferRequestsA.pop();
+			//on retourne le request
+			monitorOut();
+			return r;
+		}
+		case ComputationType::B: {
+			//si le buffer est vide, on attend
+			if (bufferRequestsB.empty()) {
+				wait(condB);
+			}
+			//on récupère le request
+			Request r = bufferRequestsB.front();
+			//on le retire du buffer
+			bufferRequestsB.pop();
+			//on retourne le request
+			monitorOut();
+			return r;
+		}
+		case ComputationType::C: {
+			//si le buffer est vide, on attend
+			if (bufferRequestsC.empty()) {
+				wait(condC);
+			}
+			//on récupère le request
+			Request r = bufferRequestsC.front();
+			//on le retire du buffer
+			bufferRequestsC.pop();
+			//on retourne le request
+			monitorOut();
+			return r;
+		}
+	}
 
-    return Request(Computation(computationType), -1);
 }
 
 bool ComputationManager::continueWork(int id) {
