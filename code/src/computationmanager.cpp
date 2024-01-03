@@ -20,6 +20,9 @@ ComputationManager::ComputationManager(int maxQueueSize) : MAX_TOLERATED_QUEUE_S
 	idRequest = 0;
 	requestStop = false;
 	currentIdConsumption = 0;
+	nWaitingOnQueueA = 0;
+	nWaitingOnQueueB = 0;
+	nWaitingOnQueueC = 0;
 }
 
 int ComputationManager::requestComputation(Computation c) {
@@ -179,11 +182,14 @@ Request ComputationManager::getWork(ComputationType computationType) {
 					monitorOut();
 					throwStopException();
 				}
+				++nWaitingOnQueueA;
 				wait(queueAEmpty);
 				if (requestStop) {
 					monitorOut();
 					throwStopException();
 				}
+				--nWaitingOnQueueA;
+
 			}
 			//on récupère le request
 			r = bufferRequestsA.front();
@@ -200,12 +206,16 @@ Request ComputationManager::getWork(ComputationType computationType) {
 					monitorOut();
 					throwStopException();
 				}
+				++nWaitingOnQueueB;
 				wait(queueBEmpty);
 				if (requestStop) {
 					monitorOut();
 					throwStopException();
 				}
+				--nWaitingOnQueueB;
+
 			}
+
 			//on récupère le request
 			r = bufferRequestsB.front();
 			//on le retire du buffer
@@ -221,12 +231,16 @@ Request ComputationManager::getWork(ComputationType computationType) {
 					monitorOut();
 					throwStopException();
 				}
+				++nWaitingOnQueueC;
 				wait(queueCEmpty);
 				if (requestStop) {
 					monitorOut();
 					throwStopException();
 				}
+				--nWaitingOnQueueC;
+
 			}
+
 			//on récupère le request
 			r = bufferRequestsC.front();
 			//on le retire du buffer
@@ -275,13 +289,23 @@ void ComputationManager::stop() {
 	// TODO
 	monitorIn();
 	requestStop = true;
-	signal(queueAEmpty);
-	signal(queueBEmpty);
-	signal(queueCEmpty);
+	for (int k = 0 ; k < nWaitingOnQueueA ; ++k) {
+		signal(queueAEmpty);
+	}
+	nWaitingOnQueueA = 0;
+	for (int k = 0 ; k < nWaitingOnQueueB ; ++k) {
+		signal(queueBEmpty);
+	}
+	nWaitingOnQueueB = 0;
+	for (int k = 0 ; k < nWaitingOnQueueC ; ++k) {
+		signal(queueCEmpty);
+	}
+	nWaitingOnQueueC = 0;
+
 	signal(queueAFull);
 	signal(queueBFull);
 	signal(queueCFull);
-
 	signal(bufferNotReady);
+
 	monitorOut();
 }

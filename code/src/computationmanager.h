@@ -187,6 +187,10 @@ protected:
 	int idRequest;
 	int currentIdConsumption;
     bool requestStop;
+
+	unsigned nWaitingOnQueueA;
+	unsigned nWaitingOnQueueB;
+	unsigned nWaitingOnQueueC;
    // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
 	 std::deque<Request> bufferRequestsA;
