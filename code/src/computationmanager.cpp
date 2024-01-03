@@ -42,7 +42,7 @@ int ComputationManager::requestComputation(Computation c) {
 		case ComputationType::B:{
 			//on construit un request avec la computation brut
 			Request r(c, id++);
-			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
+			if (bufferRequestsB.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
 				wait(queueBFull);
 			}
@@ -55,7 +55,7 @@ int ComputationManager::requestComputation(Computation c) {
 		case ComputationType::C:{
 			//on construit un request avec la computation brut
 			Request r(c, id++);
-			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
+			if (bufferRequestsC.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
 				wait(queueCFull);
 			}
@@ -76,6 +76,7 @@ void ComputationManager::abortComputation(int id) {
 	//sinon, on ne fait rien
 	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
 	// continueWork(id)
+	/*
 	monitorIn();
 	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
 	//TODO faire un truc générique ...
@@ -106,6 +107,7 @@ void ComputationManager::abortComputation(int id) {
 	removeIdVector(bufferResults);
 	abortedIds.push_back(id);
 	monitorOut();
+	 */
 
 }
 
@@ -181,11 +183,14 @@ Request ComputationManager::getWork(ComputationType computationType) {
 
 bool ComputationManager::continueWork(int id) {
     // TODO
-	if (std::any_of(abortedIds.begin(), abortedIds.end(), [id](int abortedId) {return abortedId == id; })) {
+	/*
+	if (std::any_of(abortedIds.begin(), abortedIds.end(), [id](int abortedId)
+	{return abortedId == id; })) {
 		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id), abortedIds.end());
 		return false;
 	}
 	return true;
+	 */
 }
 
 void ComputationManager::provideResult(Result result) {
