@@ -48,7 +48,7 @@ public:
 };
 
 /**
- * @brief The Request class is a request for a computation with and id and data
+ * @brief The Request class is a request for a computation with and idRequest and data
  */
 class Request
 {
@@ -69,7 +69,7 @@ private:
 };
 
 /**
- * @brief The Result class holds a result and an id
+ * @brief The Result class holds a result and an idRequest
  */
 class Result
 {
@@ -93,16 +93,16 @@ public:
     /**
      * @brief requestComputation Request a computation c
      * @param c The computation to be done
-     * @return The assigned id (should follow the order of the requests)
+     * @return The assigned idRequest (should follow the order of the requests)
      */
     virtual int requestComputation(Computation c) = 0;
 
     /**
      * @brief abortComputation Allows the client to abort a computation
-     * This should remove the Request/Result corresponding to the id in
+     * This should remove the Request/Result corresponding to the idRequest in
      * the ComputationManager (buffer) if there is one and stop a compute
      * engine working on it if there was one.
-     * @param id the id of the computation to be aborted
+     * @param id the idRequest of the computation to be aborted
      */
     virtual void abortComputation(int id) = 0;
 
@@ -131,8 +131,8 @@ public:
 
     /**
      * @brief continueWork Allows a compute engine to ask if it must continue working on a request
-     * @param id the id of the request the compute engine is currently working on
-     * @return true if the worker should continue working on the request with id id
+     * @param id the idRequest of the request the compute engine is currently working on
+     * @return true if the worker should continue working on the request with idRequest idRequest
      */
     virtual bool continueWork(int id) = 0;
 
@@ -184,8 +184,10 @@ protected:
 
     // Ajoutez vos attributs et déclarations de méthodes ici
     // P.ex. variables conditions et structure de données pour le buffer
-	 int id;
-    // Queues
+	int idRequest;
+	int currentIdConsumption;
+    bool requestStop;
+   // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
 	 std::deque<Request> bufferRequestsA;
 	 std::deque<Request> bufferRequestsB;
@@ -193,12 +195,12 @@ protected:
 
 	 std::vector<Result> bufferResults;
 	 std::vector<int> abortedIds;
-     bool stopped = false;
+	 Condition bufferNotReady;
 
-	 Condition bufferEmpty;
 	 Condition queueAEmpty;
 	 Condition queueBEmpty;
 	 Condition queueCEmpty;
+
      Condition queueAFull;
      Condition queueBFull;
      Condition queueCFull;

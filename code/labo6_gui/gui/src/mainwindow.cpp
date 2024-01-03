@@ -142,7 +142,7 @@ protected:
         try {
             while (true) {
                 auto res = cmp->getNextResult();
-                GuiInterface::instance->logMessage(-1, QString("Got result with id : %1").arg(res.getId()));
+                GuiInterface::instance->logMessage(-1, QString("Got result with idRequest : %1").arg(res.getId()));
                 GuiInterface::instance->addResult(GuiInterface::instance->getCurrentTime(), QString("%1").arg(res.getId()));
             }
         } catch (ComputationManager::StopException& e) {

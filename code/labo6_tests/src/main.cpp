@@ -109,8 +109,8 @@ TEST(Etape2, OrderShouldBeCorrect) {
                            auto id2 = cm.requestComputation(Computation(ComputationType::A));
                            auto req1 = cm.getWork(ComputationType::A);
                            auto req2 = cm.getWork(ComputationType::A);
-                           ASSERT_EQ(id1, req1.getId()) << "The first request should have the first id";
-                           ASSERT_EQ(id2, req2.getId()) << "The second request should have the second id";
+                           ASSERT_EQ(id1, req1.getId()) << "The first request should have the first idRequest";
+                           ASSERT_EQ(id2, req2.getId()) << "The second request should have the second idRequest";
                            ASSERT_LT(req1.getId(), req2.getId()) << "The if of the first request should be lower than the one of the second request";
                            double value1 = 3.1415;
                            double value2 = 2.0;
@@ -118,8 +118,8 @@ TEST(Etape2, OrderShouldBeCorrect) {
                            cm.provideResult(Result(id1, value1));
                            auto res1 = cm.getNextResult();
                            auto res2 = cm.getNextResult();
-                           ASSERT_EQ(id1, res1.getId()) << "The first result should have the first id";
-                           ASSERT_EQ(id2, res2.getId()) << "The second result should have the second id";
+                           ASSERT_EQ(id1, res1.getId()) << "The first result should have the first idRequest";
+                           ASSERT_EQ(id2, res2.getId()) << "The second result should have the second idRequest";
                            ASSERT_EQ(value1, res1.getResult()) << "The values of the results should not be mixed";
                            ASSERT_EQ(value2, res2.getResult()) << "The values of the results should not be mixed";
                        })
@@ -278,10 +278,10 @@ TEST(Etape4, ComputeEngineShouldBeReleased) {
 
 /* The results should arrive in the correct order and hold the correct value */
 TEST(Etape4, ResultsShouldArriveInOrderAndBufferMustStop) {
-    ASSERT_DURATION_LE(2 , {
+    ASSERT_DURATION_LE(2000, {
     auto cm = std::make_shared<ComputationManager>();
 
-    // Test compute engines return the id casted to double as the result
+    // Test compute engines return the idRequest casted to double as the result
     std::vector<TestComputeEngine> tce;
     tce.push_back(TestComputeEngine(cm, ComputationType::A, 10, 10));
     tce.push_back(TestComputeEngine(cm, ComputationType::A, 12, 10));

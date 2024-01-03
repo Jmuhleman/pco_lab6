@@ -14,10 +14,12 @@
 #include "computationmanager.h"
 #include <algorithm>
 
-ComputationManager::ComputationManager(int maxQueueSize): MAX_TOLERATED_QUEUE_SIZE(maxQueueSize)
-{
-    // TODO
-	 id = 0;
+ComputationManager::ComputationManager(int maxQueueSize) : MAX_TOLERATED_QUEUE_SIZE(
+	maxQueueSize) {
+	// TODO
+	idRequest = 0;
+	requestStop = false;
+	currentIdConsumption = 0;
 }
 
 int ComputationManager::requestComputation(Computation c) {
@@ -25,14 +27,21 @@ int ComputationManager::requestComputation(Computation c) {
 	monitorIn();
 	//il faut construire un request avec la computation brut afin de les trier
 	//dans le buffer du résultat
-	Request r(c, id);
-
-	switch (c.computationType){
+	Request r(c, idRequest);
+	switch (c.computationType) {
 		case ComputationType::A: {
 			//on construit un request avec la computation brut
 			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueAFull);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on ajoute le request dans le buffer
 			bufferRequestsA.push_back(r);
@@ -40,11 +49,19 @@ int ComputationManager::requestComputation(Computation c) {
 			signal(queueAEmpty);
 			break;
 		}
-		case ComputationType::B:{
+		case ComputationType::B: {
 			//on construit un request avec la computation brut
 			if (bufferRequestsB.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueBFull);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on ajoute le request dans le buffer
 			bufferRequestsB.push_back(r);
@@ -52,11 +69,19 @@ int ComputationManager::requestComputation(Computation c) {
 			signal(queueBEmpty);
 			break;
 		}
-		case ComputationType::C:{
+		case ComputationType::C: {
 			//on construit un request avec la computation brut
 			if (bufferRequestsC.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueCFull);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on ajoute le request dans le buffer
 			bufferRequestsC.push_back(r);
@@ -64,32 +89,36 @@ int ComputationManager::requestComputation(Computation c) {
 			signal(queueCEmpty);
 		}
 	}
-	++id;
+	++idRequest;
 	monitorOut();
 	return r.getId();
 }
 
 void ComputationManager::abortComputation(int id) {
-    // TODO
-	//aller dans chaque queue et buffer de résultat et supprimer le request avec l'id
+	// TODO
+	//aller dans chaque queue et buffer de résultat et supprimer le request avec l'idRequest
 	//si le request est trouvé, on le supprime et on notifie les threads qui attendent
 	//sinon, on ne fait rien
 	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
-	// continueWork(id)
+	// continueWork(idRequest)
 
 	monitorIn();
 	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
 	//TODO faire un truc générique ...
-	auto removeIdDeque = [id](std::deque<Request>& requests) {
+	auto removeIdDeque = [id](std::deque<Request> &requests) {
 
 	   requests.erase(std::remove_if(requests.begin(), requests.end(),
-	                                            [id](const Request& request) { return request.getId() == id; }), requests.end());
+	                                 [id](const Request &request) {
+		                                return request.getId() == id;
+	                                 }), requests.end());
 	};
 
-	auto removeIdVector = [id](std::vector<Result>& requests) {
+	auto removeIdVector = [id](std::vector<Result> &requests) {
 
 	   requests.erase(std::remove_if(requests.begin(), requests.end(),
-	                                             [id](const Result& request) { return request.getId() == id; }), requests.end());
+	                                 [id](const Result &request) {
+		                                return request.getId() == id;
+	                                 }), requests.end());
 	};
 	// Supprimer l'élément avec l'ID spécifié de chaque deque
 	// Signaler que les files ne sont plus pleines
@@ -111,97 +140,148 @@ void ComputationManager::abortComputation(int id) {
 }
 
 Result ComputationManager::getNextResult() {
-    // TODO
-    // Replace all of the code below by your code
+	// TODO
+	// Replace all of the code below by your code
 	monitorIn();
-	 if (bufferResults.empty()) {
-		 wait(bufferEmpty);
-	 }
 
-     Result r = bufferResults.front();
-	 bufferResults.erase(bufferResults.begin());
-	 monitorOut();
-	 return r;
+	while (bufferResults.empty() || bufferResults.front().getId()
+	!= currentIdConsumption){
+		if (requestStop) {
+			monitorOut();
+			throwStopException();
+		}
+		wait(bufferNotReady);
+		if (requestStop) {
+			monitorOut();
+			throwStopException();
+		}
+	}
+	Result r = bufferResults.front();
+	bufferResults.erase(bufferResults.begin());
+	++currentIdConsumption;
+
+	monitorOut();
+	return r;
 }
 
 Request ComputationManager::getWork(ComputationType computationType) {
-    // TODO
-    // Replace all of the code below by your code
+	// TODO
+	// Replace all of the code below by your code
 
-    // Filled with arbitrary code in order to make the callers wait
-    monitorIn();
+	// Filled with arbitrary code in order to make the callers wait
+	monitorIn();
+	Request r;
 	switch (computationType) {
 		case ComputationType::A: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsA.empty()) {
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueAEmpty);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on récupère le request
-			Request r = bufferRequestsA.front();
+			r = bufferRequestsA.front();
 			//on le retire du buffer
 			bufferRequestsA.pop_front();
 			//on retourne le request
 			signal(queueAFull);
-			monitorOut();
-			return r;
+			break;
 		}
 		case ComputationType::B: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsB.empty()) {
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueBEmpty);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on récupère le request
-			Request r = bufferRequestsB.front();
+			r = bufferRequestsB.front();
 			//on le retire du buffer
 			bufferRequestsB.pop_front();
 			//on retourne le request
 			signal(queueBFull);
-			monitorOut();
-			return r;
+			break;
 		}
 		case ComputationType::C: {
 			//si le buffer est vide, on attend
 			if (bufferRequestsC.empty()) {
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 				wait(queueCEmpty);
+				if (requestStop) {
+					monitorOut();
+					throwStopException();
+				}
 			}
 			//on récupère le request
-			Request r = bufferRequestsC.front();
+			r = bufferRequestsC.front();
 			//on le retire du buffer
 			bufferRequestsC.pop_front();
 			//on retourne le request
-			signal(queueBFull);
-			monitorOut();
-			return r;
+			signal(queueCFull);
 		}
 	}
-
+	monitorOut();
+	return r;
 }
 
 bool ComputationManager::continueWork(int id) {
-    // TODO
-
-	if (std::any_of(abortedIds.begin(), abortedIds.end(), [id](int abortedId)
-	{return abortedId == id; })) {
-		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id), abortedIds.end());
+	// TODO
+	monitorIn();
+	if (requestStop) {
+		monitorOut();
 		return false;
 	}
-	return true;
 
+	if (std::any_of(abortedIds.begin(), abortedIds.end(),
+	                [id](int abortedId) { return abortedId == id; })) {
+		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id),abortedIds.end());
+		monitorOut();
+		return false;
+	}
+	monitorOut();
+	return true;
 }
 
 void ComputationManager::provideResult(Result result) {
 
 	monitorIn();
 	bufferResults.push_back(result);
-	std::sort(bufferResults.begin(), bufferResults.end(),
-			  [](Result a, Result b) {return a.getId() < b.getId(); });
-	signal(bufferEmpty);
-	monitorOut();
 
+	std::sort(bufferResults.begin(), bufferResults.end(),
+	          [](Result a, Result b) { return a.getId() < b.getId(); });
+
+	if (bufferResults.front().getId() == currentIdConsumption) {
+		signal(bufferNotReady);
+	}
+	monitorOut();
 }
 
 void ComputationManager::stop() {
-    // TODO
+	// TODO
+	monitorIn();
+	requestStop = true;
+	signal(queueAEmpty);
+	signal(queueBEmpty);
+	signal(queueCEmpty);
+	signal(queueAFull);
+	signal(queueBFull);
+	signal(queueCFull);
 
-
+	signal(bufferNotReady);
+	monitorOut();
 }
