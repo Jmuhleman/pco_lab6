@@ -184,7 +184,7 @@ protected:
 
     // Ajoutez vos attributs et déclarations de méthodes ici
     // P.ex. variables conditions et structure de données pour le buffer
-	 unsigned id;
+	 int id;
     // Queues
     const size_t MAX_TOLERATED_QUEUE_SIZE;
 	 std::deque<Request> bufferRequestsA;

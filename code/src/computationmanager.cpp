@@ -24,11 +24,12 @@ int ComputationManager::requestComputation(Computation c) {
 	// TODO
 	monitorIn();
 	//il faut construire un request avec la computation brut afin de les trier
-	//dans le buffer du résultat !
+	//dans le buffer du résultat
+	Request r(c, id);
+
 	switch (c.computationType){
 		case ComputationType::A: {
 			//on construit un request avec la computation brut
-			Request r(c, id++);
 			if (bufferRequestsA.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
 				wait(queueAFull);
@@ -41,7 +42,6 @@ int ComputationManager::requestComputation(Computation c) {
 		}
 		case ComputationType::B:{
 			//on construit un request avec la computation brut
-			Request r(c, id++);
 			if (bufferRequestsB.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
 				wait(queueBFull);
@@ -54,7 +54,6 @@ int ComputationManager::requestComputation(Computation c) {
 		}
 		case ComputationType::C:{
 			//on construit un request avec la computation brut
-			Request r(c, id++);
 			if (bufferRequestsC.size() >= MAX_TOLERATED_QUEUE_SIZE) {
 				//si le buffer est plein, on attend
 				wait(queueCFull);
@@ -63,10 +62,11 @@ int ComputationManager::requestComputation(Computation c) {
 			bufferRequestsC.push_back(r);
 			//on notifie les threads qui attendent
 			signal(queueCEmpty);
-			break;
 		}
 	}
+	++id;
 	monitorOut();
+	return r.getId();
 }
 
 void ComputationManager::abortComputation(int id) {
@@ -114,10 +114,7 @@ void ComputationManager::abortComputation(int id) {
 Result ComputationManager::getNextResult() {
     // TODO
     // Replace all of the code below by your code
-
-    // Filled with some code in order to make the thread in the UI wait
-	 monitorIn();
-
+	monitorIn();
 	 if (bufferResults.empty()) {
 		 wait(bufferEmpty);
 	 }
