@@ -16,7 +16,6 @@
 
 ComputationManager::ComputationManager(int maxQueueSize) : MAX_TOLERATED_QUEUE_SIZE(
 	maxQueueSize) {
-	// TODO
 	idRequest = 0;
 	requestStop = false;
 	currentIdConsumption = 0;
@@ -26,7 +25,6 @@ ComputationManager::ComputationManager(int maxQueueSize) : MAX_TOLERATED_QUEUE_S
 }
 
 int ComputationManager::requestComputation(Computation c) {
-	// TODO
 	monitorIn();
 	//il faut construire un request avec la computation brut afin de les trier
 	//dans le buffer du résultat
@@ -98,13 +96,11 @@ int ComputationManager::requestComputation(Computation c) {
 }
 
 void ComputationManager::abortComputation(int id) {
-	// TODO
 	//aller dans chaque queue et buffer de résultat et supprimer le request avec l'idRequest
 	//si le request est trouvé, on le supprime et on notifie les threads qui attendent
 	//sinon, on ne fait rien
 	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
 	// continueWork(idRequest)
-
 	monitorIn();
 	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
 	//TODO faire un truc générique ...
@@ -143,12 +139,10 @@ void ComputationManager::abortComputation(int id) {
 }
 
 Result ComputationManager::getNextResult() {
-	// TODO
-	// Replace all of the code below by your code
 	monitorIn();
 
 	while (bufferResults.empty() || bufferResults.front().getId()
-	!= currentIdConsumption){
+	                                != currentIdConsumption) {
 		if (requestStop) {
 			monitorOut();
 			throwStopException();
@@ -168,10 +162,6 @@ Result ComputationManager::getNextResult() {
 }
 
 Request ComputationManager::getWork(ComputationType computationType) {
-	// TODO
-	// Replace all of the code below by your code
-
-	// Filled with arbitrary code in order to make the callers wait
 	monitorIn();
 	Request r;
 	switch (computationType) {
@@ -189,7 +179,6 @@ Request ComputationManager::getWork(ComputationType computationType) {
 					throwStopException();
 				}
 				--nWaitingOnQueueA;
-
 			}
 			//on récupère le request
 			r = bufferRequestsA.front();
@@ -215,7 +204,6 @@ Request ComputationManager::getWork(ComputationType computationType) {
 				--nWaitingOnQueueB;
 
 			}
-
 			//on récupère le request
 			r = bufferRequestsB.front();
 			//on le retire du buffer
@@ -240,7 +228,6 @@ Request ComputationManager::getWork(ComputationType computationType) {
 				--nWaitingOnQueueC;
 
 			}
-
 			//on récupère le request
 			r = bufferRequestsC.front();
 			//on le retire du buffer
@@ -254,7 +241,6 @@ Request ComputationManager::getWork(ComputationType computationType) {
 }
 
 bool ComputationManager::continueWork(int id) {
-	// TODO
 	monitorIn();
 	if (requestStop) {
 		monitorOut();
@@ -263,7 +249,8 @@ bool ComputationManager::continueWork(int id) {
 
 	if (std::any_of(abortedIds.begin(), abortedIds.end(),
 	                [id](int abortedId) { return abortedId == id; })) {
-		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id),abortedIds.end());
+		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id),
+		                 abortedIds.end());
 		monitorOut();
 		return false;
 	}
@@ -272,7 +259,6 @@ bool ComputationManager::continueWork(int id) {
 }
 
 void ComputationManager::provideResult(Result result) {
-
 	monitorIn();
 	bufferResults.push_back(result);
 
@@ -286,18 +272,17 @@ void ComputationManager::provideResult(Result result) {
 }
 
 void ComputationManager::stop() {
-	// TODO
 	monitorIn();
 	requestStop = true;
-	for (int k = 0 ; k < nWaitingOnQueueA ; ++k) {
+	for (int k = 0; k < nWaitingOnQueueA; ++k) {
 		signal(queueAEmpty);
 	}
 	nWaitingOnQueueA = 0;
-	for (int k = 0 ; k < nWaitingOnQueueB ; ++k) {
+	for (int k = 0; k < nWaitingOnQueueB; ++k) {
 		signal(queueBEmpty);
 	}
 	nWaitingOnQueueB = 0;
-	for (int k = 0 ; k < nWaitingOnQueueC ; ++k) {
+	for (int k = 0; k < nWaitingOnQueueC; ++k) {
 		signal(queueCEmpty);
 	}
 	nWaitingOnQueueC = 0;
@@ -306,6 +291,5 @@ void ComputationManager::stop() {
 	signal(queueBFull);
 	signal(queueCFull);
 	signal(bufferNotReady);
-
 	monitorOut();
 }
