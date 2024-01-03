@@ -76,39 +76,38 @@ void ComputationManager::abortComputation(int id) {
 	//sinon, on ne fait rien
 	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
 	// continueWork(id)
-	/*
+
 	monitorIn();
 	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
 	//TODO faire un truc générique ...
 	auto removeIdDeque = [id](std::deque<Request>& requests) {
 
-	   auto ret = requests.erase(std::remove_if(requests.begin(), requests.end(),
+	   requests.erase(std::remove_if(requests.begin(), requests.end(),
 	                                            [id](const Request& request) { return request.getId() == id; }), requests.end());
-	   return ret != requests.end();
 	};
 
 	auto removeIdVector = [id](std::vector<Result>& requests) {
 
-	    auto ret = requests.erase(std::remove_if(requests.begin(), requests.end(),
+	   requests.erase(std::remove_if(requests.begin(), requests.end(),
 	                                             [id](const Result& request) { return request.getId() == id; }), requests.end());
-	   return ret != requests.end();
 	};
 	// Supprimer l'élément avec l'ID spécifié de chaque deque
 	// Signaler que les files ne sont plus pleines
-	if (removeIdDeque(bufferRequestsA)) {
+	removeIdDeque(bufferRequestsA);
+	removeIdDeque(bufferRequestsB);
+	removeIdDeque(bufferRequestsC);
+	removeIdVector(bufferResults);
+	if (bufferRequestsA.size() < MAX_TOLERATED_QUEUE_SIZE) {
 		signal(queueAFull);
 	}
-	if (removeIdDeque(bufferRequestsB)) {
+	if (bufferRequestsB.size() < MAX_TOLERATED_QUEUE_SIZE) {
 		signal(queueBFull);
 	}
-	if (removeIdDeque(bufferRequestsC)) {
+	if (bufferRequestsC.size() < MAX_TOLERATED_QUEUE_SIZE) {
 		signal(queueCFull);
 	}
-	removeIdVector(bufferResults);
 	abortedIds.push_back(id);
 	monitorOut();
-	 */
-
 }
 
 Result ComputationManager::getNextResult() {
@@ -180,14 +179,14 @@ Request ComputationManager::getWork(ComputationType computationType) {
 
 bool ComputationManager::continueWork(int id) {
     // TODO
-	/*
+
 	if (std::any_of(abortedIds.begin(), abortedIds.end(), [id](int abortedId)
 	{return abortedId == id; })) {
 		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id), abortedIds.end());
 		return false;
 	}
 	return true;
-	 */
+
 }
 
 void ComputationManager::provideResult(Result result) {
