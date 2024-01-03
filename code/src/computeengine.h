@@ -55,8 +55,8 @@ protected:
     [[nodiscard]] virtual double getResult() const = 0;
 
     /**
-     * @brief getCurrentRequestId Returns the idRequest of the current request
-     * @return the idRequest of the current request
+     * @brief getCurrentRequestId Returns the id of the current request
+     * @return the id of the current request
      */
     [[nodiscard]] virtual int getCurrentRequestId() const = 0;
 
@@ -71,7 +71,7 @@ protected:
     const std::shared_ptr<ComputeEngineInterface> computationManager;
 
     /**
-     * @brief idRequest The compute engine idRequest
+     * @brief id The compute engine id
      */
     const int id;
 };
