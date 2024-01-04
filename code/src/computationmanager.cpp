@@ -241,12 +241,10 @@ Request ComputationManager::getWork(ComputationType computationType) {
 }
 
 bool ComputationManager::continueWork(int id) {
-	monitorIn();
 	if (requestStop) {
-		monitorOut();
 		return false;
 	}
-
+	monitorIn();
 	if (std::any_of(abortedIds.begin(), abortedIds.end(),
 	                [id](int abortedId) { return abortedId == id; })) {
 		abortedIds.erase(std::remove(abortedIds.begin(), abortedIds.end(), id),
