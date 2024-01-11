@@ -95,15 +95,26 @@ int ComputationManager::requestComputation(Computation c) {
 	return r.getId();
 }
 
+/*
+template <typename T>
+void removeId(T &requests, const int id) {
+	requests.erase(std::remove_if(
+		requests.begin(),
+		requests.end(),
+		[id](const Request &request) {return request.getId() == id;},
+		requests.end()));
+}*/
+
 void ComputationManager::abortComputation(int id) {
 	//aller dans chaque queue et buffer de résultat et supprimer le request avec l'idRequest
 	//si le request est trouvé, on le supprime et on notifie les threads qui attendent
 	//sinon, on ne fait rien
-	//ajouter un vector des ids annulés pour vérifier si il faut continuer depuis
+	//ajouter un vector des ids annulés pour vérifier s'il faut continuer depuis
 	// continueWork(idRequest)
 	monitorIn();
-	// Fonction lambda pour supprimer un élément avec l'ID spécifié de la deque
-	//TODO faire un truc générique ...
+	// A la demande du professeur j'ai laissé ces fonctions en version lambda
+	// après avoir essayé de faire une version générique (ligne 98-104) sans
+	// réussir...
 	auto removeIdDeque = [id](std::deque<Request> &requests) {
 
 	   requests.erase(std::remove_if(requests.begin(), requests.end(),
@@ -124,6 +135,7 @@ void ComputationManager::abortComputation(int id) {
 	removeIdDeque(bufferRequestsA);
 	removeIdDeque(bufferRequestsB);
 	removeIdDeque(bufferRequestsC);
+
 	removeIdVector(bufferResults);
 	if (bufferRequestsA.size() < MAX_TOLERATED_QUEUE_SIZE) {
 		signal(queueAFull);
@@ -271,6 +283,11 @@ void ComputationManager::provideResult(Result result) {
 
 void ComputationManager::stop() {
 	monitorIn();
+
+	// selon les indications du professeur, on considère qu'il n'y a qu'un seul
+	// client
+	// faisant des demandes de calculs. Donc pas de compteurs sur les fonctions
+	// interfaces du client faisant un wait puisque le client est unique.
 	requestStop = true;
 	for (int k = 0; k < nWaitingOnQueueA; ++k) {
 		signal(queueAEmpty);

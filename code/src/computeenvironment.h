@@ -31,8 +31,8 @@ public:
      */
     void populateComputeEnvironment() {
         addComputeEngine(ComputationType::A, 2);
-        addComputeEngine(ComputationType::B);
-        addComputeEngine(ComputationType::C);
+        addComputeEngine(ComputationType::B, 2);
+        addComputeEngine(ComputationType::C, 2);
     }
 
     /**
