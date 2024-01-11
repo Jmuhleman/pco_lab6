@@ -6,6 +6,7 @@
 // Auteur : Rick Wertenbroek
 //
 // Modifications : (si vous effectuez des changements notez le ici)
+// modifié le nombre de calculateurs
 // Auteurs : Prénom Nom, Prénom Nom
 
 #ifndef COMPUTEENVIRONMENT_H
